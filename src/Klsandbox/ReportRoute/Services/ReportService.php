@@ -1,0 +1,423 @@
+<?php
+
+namespace Klsandbox\ReportRoute\Services;
+
+use App\Models\Bonus;
+use App\Models\Order;
+use App\Models\User;
+use Auth;
+use Carbon\Carbon;
+use DB;
+use Illuminate\Support\Collection;
+use Klsandbox\BillplzRoute\Models\BillplzResponse;
+use Klsandbox\BonusModel\Models\BonusCurrency;
+use Klsandbox\BonusModel\Models\BonusStatus;
+use Klsandbox\OrderModel\Models\OrderStatus;
+
+class ReportService
+{
+    private function getMonthlyCount(Collection $collection, Carbon $startDate)
+    {
+        $list = [];
+        for ($i = 12; $i >= 0; --$i) {
+            $start = new Carbon();
+            $start->startOfMonth();
+            $start->addMonths(-$i);
+            $end = new Carbon();
+            $end->addMonths(-$i);
+            $end->endOfMonth();
+
+            $itemsInMonth = $collection->filter(function ($item) use ($start, $end) {
+                return $item->created_at >= $start && $item->created_at <= $end;
+            });
+
+            if ($startDate->lte($start)) {
+                array_push($list, $itemsInMonth->count());
+            }
+        }
+
+        return $list;
+    }
+
+    public function getShortMonthName($startDate)
+    {
+        if ($startDate instanceof Carbon) {
+
+        } else {
+            $startDate = new Carbon($startDate);
+        }
+
+        $startDate->startOfMonth();
+
+        $list = [];
+        for ($i = 12; $i >= 0; --$i) {
+            $start = new Carbon();
+            $start->startOfMonth();
+            $start->addMonths(-$i);
+
+            if ($startDate->lte($start)) {
+                array_push($list, $start->format('M'));
+            }
+        }
+
+        return $list;
+    }
+
+    public function getMonthlyOrderCount($startDate)
+    {
+        if ($startDate instanceof Carbon) {
+
+        } else {
+            $startDate = new Carbon($startDate);
+        }
+
+        $startDate->startOfMonth();
+
+        $q = Order::forSite()
+            ->whereIn('order_status_id', [OrderStatus::Approved()->id, OrderStatus::Received()->id, OrderStatus::Shipped()->id]);
+
+        if (Auth::user()->role->name != 'admin') {
+            $q = $q->where('user_id', '=', Auth::user()->id);
+        }
+
+        $orders = $q->get();
+
+        return $this->getMonthlyCount($orders, $startDate);
+    }
+
+    public function getMonthlyNewUserCount($startDate)
+    {
+        if ($startDate instanceof Carbon) {
+
+        } else {
+            $startDate = new Carbon($startDate);
+        }
+
+        $startDate->startOfMonth();
+
+        $q = User::forSite()
+            ->where('new_user', '=', 1)
+            ->where('account_status', '=', 'approved');
+
+        if (Auth::user()->role->name != 'admin') {
+            $q = $q->where('referral_id', '=', Auth::user()->id);
+        }
+
+        $users = $q
+            ->get();
+
+        return $this->getMonthlyCount($users, $startDate);
+    }
+
+    public function getTopIntroducer()
+    {
+        $g = User::forSite()
+            ->where('account_status', '=', 'approved')
+            ->where('role_id', '<>', User::admin()->role_id)
+            ->groupBy('referral_id')
+            ->where('referral_id', '<>', User::admin()->id)
+            ->orderBy(DB::raw('count(*)'), 'DESC')
+            ->get(['referral_id', DB::raw('count(*) as count')])
+            ->first();
+
+        return $g;
+    }
+
+    public function getTotalStockist()
+    {
+        $count = User::forSite()
+            ->where('account_status', '=', 'approved')
+            ->where('role_id', '<>', User::admin()->role_id)
+            ->count();
+        return $count;
+    }
+
+    public function getTotalOrders()
+    {
+        $q = Order::forSite();
+        $q = Order::whereApproved($q);
+        $count = $q->count();
+        return $count;
+    }
+
+    public function getCurrentMonthRevenue()
+    {
+        $q = Order::forSite();
+        $q = Order::whereApproved($q);
+        $q = $q->where('created_at', '>=', ((new Carbon())->startOfMonth()));
+
+        return $q->sum("price");
+    }
+
+    // TODO: Record price for each
+    public function getTotalRevenue()
+    {
+        $q = Order::forSite();
+        $q = Order::whereApproved($q);
+
+        return $q->sum("price");
+    }
+
+    public function getTopBonusUser()
+    {
+        $bonusList = $this->getTotalBonusPayoutPerPerson();
+
+        $sorted = array_sort($bonusList, function ($e) {
+            return $e['total'];
+        });
+
+        $best = last($sorted);
+
+        $best['user'] = User::find($best['user_id']);
+
+        return $best;
+    }
+
+    public function getTotalBonusPayoutPerPerson()
+    {
+        $g = Bonus::forSite()
+            ->where('bonus_status_id', '=', BonusStatus::Active()->id)
+            ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
+            ->get();
+
+        $g = $g->groupBy(function ($item) {
+            return $item->awarded_to_user_id;
+        });
+
+        $list = [];
+        foreach ($g->keys() as $key) {
+            $payoutPerPerson = $this->getTotalBonusPayoutForList(collect($g->get($key)));
+
+            $obj = (object)$payoutPerPerson;
+
+            $payoutPerPerson['user_id'] = $key;
+            $payoutPerPerson['total'] = $obj->cash + $obj->gold * 150 + $obj->bonusNotChosen * 150;
+            array_push($list, $payoutPerPerson);
+        }
+
+        return $list;
+    }
+
+    public function getTotalBonusPayout()
+    {
+        $g = Bonus::forSite()
+            ->where('bonus_status_id', '=', BonusStatus::Active()->id)
+            ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
+            ->get();
+
+        return $this->getTotalBonusPayoutForList($g);
+    }
+
+    private function getTotalBonusPayoutForList(Collection $bonusList)
+    {
+        $gr = $bonusList->groupBy(function ($e) {
+            if (!$e->bonusPayout) {
+                return 'bonusNotChosen';
+            }
+
+            return $e->bonusPayout->bonusCurrency->key;
+        });
+
+        $totals = ['cash' => 0, 'gold' => 0, 'bonusNotChosen' => 0];
+
+        foreach ($gr->keys() as $key) {
+            $currency = array_map(function ($e) {
+                if (!$e->bonusPayout) {
+                    return 1;
+                }
+
+                return $e->bonusPayout->currency_amount;
+            }, $gr->get($key));
+            $sum = array_sum($currency);
+            $totals[$key] = $sum;
+        }
+
+        return $totals;
+    }
+
+    public function totalRestock(User $user)
+    {
+        $q = $user->orders();
+        $q = Order::whereApproved($q);
+        $count = $q->count();
+        return $count;
+    }
+
+    public function totalRevenue(User $user)
+    {
+        $q = $user->orders();
+        $q = Order::whereApproved($q);
+        $revenue = $q->sum('price');
+        return $revenue;
+    }
+
+    public function totalDownline(User $user)
+    {
+        $q = $user->downLevels();
+        $q = User::whereApproved($q);
+        $count = $q->count();
+        return $count;
+    }
+
+    public function monthlyBonusTotal(User $user)
+    {
+        $month = new Carbon();
+        $month->startOfMonth();
+
+        $group = $user->bonuses()->with('bonusPayout')->get()->filter(function ($bonus) use ($month) {
+            if ($bonus->created_at->lt($month)) {
+                return false;
+            }
+
+            if (!$bonus->bonusPayout) {
+                return true;
+            }
+
+            if ($bonus->bonusPayout->getAttribute('hidden') == 1) {
+                return false;
+            }
+
+            return true;
+        })->groupBy(function ($bonus) {
+            if (!$bonus->bonusPayout) {
+                return "bonus-not-chosen";
+            }
+
+            return $bonus->bonusPayout->bonusCurrency->key;
+        });
+
+        $list = [];
+
+        foreach ($group->all() as $g) {
+            $item = ['total' => 0, 'currency' => null];
+            foreach ($g as $e) {
+                if (!$e->bonusPayout) {
+                    $item['currency'] = BonusCurrency::BonusNotChosen();
+                    $item['total'] += 1;
+                } else {
+                    $item['currency'] = $e->bonusPayout->bonusCurrency;
+                    $item['total'] = $e->bonusPayout->currency_amount;
+                }
+            }
+
+            array_push($list, $item);
+        }
+
+        return $list;
+    }
+
+    private function getReportForUser(Carbon $date, Carbon $end, $user, Collection $allApprovedOrders, Collection $allUsers, Collection $bonusForMonth)
+    {
+        $data = ['user' => null, 'totalApprovedOrders' => 0, 'totalIntroductions' => 0, 'totalStockists' => 0, 'totalBonus' => null, 'bonusPayoutForMonth' => null];
+        $data = (object)$data;
+        $data->user = $user;
+
+        $userApprovedOrders = $allApprovedOrders->filter(function ($order) use ($user) {
+            return $order->user_id == $user->id;
+        });
+
+        $data->totalApprovedOrders = $userApprovedOrders->count();
+
+        $allDownLevelUsers = $allUsers->filter(function ($downLevel) use ($user) {
+            return $user->id == $downLevel->referral_id;
+        });
+
+        $data->totalStockists = $allDownLevelUsers->count();
+
+        $newDownLevelUsers = $allDownLevelUsers->filter(function ($downLevel) use ($date, $end) {
+            return $downLevel->created_at >= $date && $downLevel->created_at <= $end;
+        });
+
+        $data->totalIntroductions = $newDownLevelUsers->count();
+
+        $bonusForMonthUsers = $bonusForMonth->filter(function ($bonus) use ($user) {
+            return $bonus->awarded_to_user_id == $user->id;
+        });
+
+        $data->onlinePayer = BillplzResponse::getCountUserPay($user->id, $date, $end);
+
+        $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonthUsers);
+
+        $data->bonusPayoutForMonth = $bonusPayoutForMonth;
+
+        return $data;
+    }
+
+    public function getMonthlyReport($year, $month)
+    {
+        $userClass = config('auth.model');
+
+        $date = new Carbon("$year-$month-01");
+        $end = new Carbon("$year-$month-01");
+        $end->endOfMonth();
+
+        // Total orders made for the month
+        // Total orders approved for the month
+        // Total users joined for the month
+        // Total users in system
+        // Total revenue - sum(price) for the month
+        // Total bonus paid out (Cash, Gold, Unchosen) for the month
+
+        $allOrders = Order::forSite()
+            ->with('user')
+            ->where('created_at', '>=', $date)
+            ->where('created_at', '<=', $end)
+            ->orderBy('created_at')
+            ->get();
+
+        $allUsers = $userClass::forSite()
+            ->where('created_at', '<=', $end)
+            ->where('account_status', '=', 'Approved')
+            ->get();
+
+        $totalOrders = $allOrders->count();
+
+        $allApprovedOrders = $allOrders->filter(function ($order) {
+            return !!$order->approved_at && $order->isApproved();
+        });
+
+        $totalApprovedOrders = $allApprovedOrders->count();
+
+        $newUsers = $allUsers->filter(function ($user) use ($date, $end) {
+            return $user->new_user &&
+            $user->created_at >= $date;
+        });
+
+        $newUsersCount = $newUsers->count();
+
+        $totalUsersCount = $allUsers->count();
+
+        $totalRevenue = $allApprovedOrders->sum(function ($e) {
+            return $e->price;
+        });
+
+        $bonusForMonth = Bonus::forSite()
+            ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
+            ->where('created_at', '>=', $date)
+            ->where('created_at', '<=', $end)
+            ->where('bonus_status_id', '=', BonusStatus::Active()->id)
+            ->get();
+
+        $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonth);
+
+        $userData = [];
+
+        foreach ($allUsers as $user) {
+            $userReport = $this->getReportForUser($date, $end, $user, $allApprovedOrders, $allUsers, $bonusForMonth);
+            array_push($userData, $userReport);
+        }
+
+        $data = ['year' => $year
+            , 'month' => $month
+            , 'totalOrders' => $totalOrders
+            , 'totalApprovedOrders' => $totalApprovedOrders
+            , 'newUsersCount' => $newUsersCount
+            , 'totalUsersCount' => $totalUsersCount
+            , 'totalRevenue' => $totalRevenue
+            , 'bonusPayoutForMonth' => $bonusPayoutForMonth
+            , 'userData' => $userData
+        ];
+
+        return (object)$data;
+    }
+}
