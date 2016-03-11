@@ -2,6 +2,7 @@
 
 namespace Klsandbox\ReportRoute\Models;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Klsandbox\BillplzRoute\Models\BillplzResponse;

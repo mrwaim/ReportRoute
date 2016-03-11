@@ -2,7 +2,6 @@
 
 namespace Klsandbox\ReportRoute\Services;
 
-use App\Models\Bonus;
 use App\Models\Order;
 use App\Models\User;
 use Auth;
@@ -175,7 +174,14 @@ class ReportService
 
     public function getTotalBonusPayoutPerPerson()
     {
-        $g = Bonus::forSite()
+        if (!config('bonus'))
+        {
+            return [];
+        }
+
+        $bonusClass = config('bonus.bonus_model');
+
+        $g = $bonusClass::forSite()
             ->where('bonus_status_id', '=', BonusStatus::Active()->id)
             ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
             ->get();
@@ -200,7 +206,14 @@ class ReportService
 
     public function getTotalBonusPayout()
     {
-        $g = Bonus::forSite()
+        if (!config('bonus'))
+        {
+            return [];
+        }
+
+        $bonusClass = config('bonus.bonus_model');
+
+        $g = $bonusClass::forSite()
             ->where('bonus_status_id', '=', BonusStatus::Active()->id)
             ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
             ->get();
@@ -391,14 +404,22 @@ class ReportService
             return $e->price;
         });
 
-        $bonusForMonth = Bonus::forSite()
-            ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
-            ->where('created_at', '>=', $date)
-            ->where('created_at', '<=', $end)
-            ->where('bonus_status_id', '=', BonusStatus::Active()->id)
-            ->get();
+        $bonusForMonth = new Collection();
+        $bonusPayoutForMonth = (object)['cash'=>0, 'gold' => 0, 'bonusNotChosen' => 0];
 
-        $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonth);
+        if (config('bonus'))
+        {
+            $bonusClass = config('bonus.bonus_model');
+
+            $bonusForMonth = $bonusClass::forSite()
+                ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
+                ->where('created_at', '>=', $date)
+                ->where('created_at', '<=', $end)
+                ->where('bonus_status_id', '=', BonusStatus::Active()->id)
+                ->get();
+
+            $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonth);
+        }
 
         $userData = [];
 
