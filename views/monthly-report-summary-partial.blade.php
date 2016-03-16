@@ -89,6 +89,7 @@
             </div>
         </section>
     </div>
+    @if($has_bonus)
     <div class="col-md-6 col-lg-6 col-xl-4">
         <section class="panel panel-featured-left panel-featured-tertiary">
             <div class="panel-body">
@@ -107,4 +108,5 @@
             </div>
         </section>
     </div>
+    @endif
 </div>

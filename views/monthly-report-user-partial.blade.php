@@ -13,8 +13,12 @@
                     <th class="text-center">Bank Account</th>
                     <th class="text-center">Approved Orders</th>
                     <th class="text-center">Total Stockist</th>
+                    @if($stockist_can_introduce)
                     <th class="text-center">Total Introduction</th>
+                    @endif
+                    @if($has_bonus)
                     <th class="text-center">Bonus Cash</th>
+                    @endif
                     <th class="text-center">Online Payer</th>
                 </tr>
                 </thead>
@@ -31,8 +35,12 @@
                         </td>
                         <td class="text-center">{{$data->orders_count}}</td>
                         <td class="text-center">{{$data->total_stockist_count}}</td>
+                        @if($stockist_can_introduce)
                         <td class="text-center">{{$data->introductions_count}}</td>
+                        @endif
+                        @if($has_bonus)
                         <td class="text-center">{{$data->bonus_payout_cash}}</td>
+                        @endif
                         <td class="text-center">
                             @if($data->online_payer)
                                 Yes
