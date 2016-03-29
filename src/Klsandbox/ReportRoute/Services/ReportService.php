@@ -234,14 +234,15 @@ class ReportService
         $totals = ['cash' => 0, 'gold' => 0, 'bonusNotChosen' => 0];
 
         foreach ($gr->keys() as $key) {
-            $currency = array_map(function ($e) {
+            $currency = $gr->get($key)->map(function ($e) {
                 if (!$e->bonusPayout) {
                     return 1;
                 }
 
                 return $e->bonusPayout->currency_amount;
-            }, $gr->get($key));
-            $sum = array_sum($currency);
+            });
+
+            $sum = $currency->sum();
             $totals[$key] = $sum;
         }
 
