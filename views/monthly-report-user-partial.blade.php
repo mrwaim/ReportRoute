@@ -13,7 +13,7 @@
                     <th class="text-center">Bank Account</th>
                     <th class="text-center">Approved Orders</th>
                     <th class="text-center">Total Stockist</th>
-                    @if($stockist_can_introduce)
+                    @if($config->stockist_can_introduce)
                     <th class="text-center">Total Introduction</th>
                     @endif
                     @if($has_bonus)
@@ -35,7 +35,7 @@
                         </td>
                         <td class="text-center">{{$data->orders_count}}</td>
                         <td class="text-center">{{$data->total_stockist_count}}</td>
-                        @if($stockist_can_introduce)
+                        @if($config->stockist_can_introduce)
                         <td class="text-center">{{$data->introductions_count}}</td>
                         @endif
                         @if($has_bonus)

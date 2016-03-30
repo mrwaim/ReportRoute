@@ -50,7 +50,6 @@ class ReportController extends Controller
             });
         }
 
-        $stockist_can_introduce = config('role.can_introduce.stockist');
         $hasBonus = !!config('bonus');
 
         return view('report-route::monthly-report')
@@ -64,8 +63,7 @@ class ReportController extends Controller
             ->with('bonusPayoutForMonth', $report->getBonusPayout())
             ->with('userData', $userReports)
             ->with('filter', $filter)
-            ->with('has_bonus', $hasBonus)
-            ->with('stockist_can_introduce', $stockist_can_introduce);
+            ->with('has_bonus', $hasBonus);
     }
 
     public function getMonthlyReportList()

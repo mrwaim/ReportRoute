@@ -1,4 +1,3 @@
-@default($stockist_can_introduce, true)
 @default($has_bonus, true)
 
 @extends('app')
