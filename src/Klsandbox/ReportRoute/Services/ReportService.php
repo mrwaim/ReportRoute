@@ -221,6 +221,32 @@ class ReportService
         return $this->getTotalBonusPayoutForList($g);
     }
 
+    public function getBonusThisMonth($userId = false)
+    {
+        if($userId == false)
+        {
+            $userId = \Auth::user()->id;
+        }
+
+        if (!config('bonus'))
+        {
+            return [];
+        }
+
+        $thisMonth = date('n');
+
+        $bonusClass = config('bonus.bonus_model');
+
+        $g = $bonusClass::forSite()
+            ->where('bonus_status_id', '=', BonusStatus::Active()->id)
+            ->where('awarded_to_user_id', '=', $userId)
+            ->where(DB::raw('MONTH(created_at)'), '=', $thisMonth)
+            ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
+            ->get();
+
+        return $this->getTotalBonusPayoutForList($g);
+    }
+
     private function getTotalBonusPayoutForList(Collection $bonusList)
     {
         $gr = $bonusList->groupBy(function ($e) {
@@ -402,7 +428,7 @@ class ReportService
         $totalUsersCount = $allUsers->count();
 
         $totalRevenue = $allApprovedOrders->sum(function ($e) {
-            return $e->price;
+            return $e->proofOfTransfer->amount;
         });
 
         $bonusForMonth = new Collection();
