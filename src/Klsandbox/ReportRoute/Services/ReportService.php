@@ -143,18 +143,36 @@ class ReportService
     {
         $q = Order::forSite();
         $q = Order::whereApproved($q);
+        $q = $q->with('productPricing');
         $q = $q->where('created_at', '>=', ((new Carbon())->startOfMonth()));
 
-        return $q->sum("price");
+        if ($q->count() > 0)
+        {
+            $price = $q->get()->map(function ($e) {
+                return $e->productPricing ? $e->productPricing->amount : 0;
+            });
+
+            return $price->sum();
+        }
+        else
+        {
+            return 0;
+        }
     }
 
     // TODO: Record price for each
     public function getTotalRevenue()
     {
         $q = Order::forSite();
-        $q = Order::whereApproved($q);
+        $q = Order::whereApproved($q)
+            ->with('proofOfTransfer')
+            ->has('proofOfTransfer');
 
-        return $q->sum("price");
+        $revenue = $q->get()->sum(function ($e) {
+            return $e->proofOfTransfer->amount;
+        });
+
+        return $revenue;
     }
 
     public function getTopBonusUser()
@@ -233,16 +251,20 @@ class ReportService
             return [];
         }
 
-        $thisMonth = date('n');
+        $thisMonth = (new \Carbon\Carbon())->startOfMonth();
 
         $bonusClass = config('bonus.bonus_model');
 
         $g = $bonusClass::forSite()
             ->where('bonus_status_id', '=', BonusStatus::Active()->id)
             ->where('awarded_to_user_id', '=', $userId)
-            ->where(DB::raw('MONTH(created_at)'), '=', $thisMonth)
+            // Need to resolve this, its so broken
+//            ->where(DB::raw('MONTH(created_at)'), '=', $thisMonth)
             ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
-            ->get();
+            ->get()
+            ->filter(function ($e) use ($thisMonth) {
+               return $e->created_at->startOfMonth() == $thisMonth;
+            });
 
         return $this->getTotalBonusPayoutForList($g);
     }
@@ -286,8 +308,14 @@ class ReportService
     public function totalRevenue(User $user)
     {
         $q = $user->orders();
-        $q = Order::whereApproved($q);
-        $revenue = $q->sum('price');
+        $q = Order::whereApproved($q)
+            ->with('proofOfTransfer')
+            ->has('proofOfTransfer');
+
+        $revenue = $q->get()->sum(function ($e) {
+            return $e->proofOfTransfer->amount;
+        });
+
         return $revenue;
     }
 
@@ -413,7 +441,7 @@ class ReportService
         $totalOrders = $allOrders->count();
 
         $allApprovedOrders = $allOrders->filter(function ($order) {
-            return !!$order->approved_at && $order->isApproved();
+            return !!$order->approved_at && $order->isApproved() && $order->proofOfTransfer != null;
         });
 
         $totalApprovedOrders = $allApprovedOrders->count();
