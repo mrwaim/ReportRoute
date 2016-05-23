@@ -27,6 +27,7 @@ use Log;
  * @property integer $bonus_payout_cash
  * @property integer $bonus_payout_gold
  * @property integer $bonus_payout_not_chosen
+ *
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereSiteId($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereId($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereCreatedAt($value)
@@ -41,13 +42,13 @@ use Log;
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereBonusPayoutCash($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereBonusPayoutGold($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereBonusPayoutNotChosen($value)
+ *
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\MonthlyUserReport[] $userReports
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\PaymentsApprovals[] $userPaymentsApprovals
  * @mixin \Eloquent
  */
 class MonthlyReport extends Model
 {
-
     use \Klsandbox\SiteModel\SiteExtensions;
 
     protected $guarded = [];
@@ -68,7 +69,7 @@ class MonthlyReport extends Model
 
     public function getBonusPayout()
     {
-        return (object)['cash' => $this->bonus_payout_cash, 'gold' => $this->bonus_payout_gold, 'bonusNotChosen' => $this->bonus_payout_not_chosen];
+        return (object) ['cash' => $this->bonus_payout_cash, 'gold' => $this->bonus_payout_gold, 'bonusNotChosen' => $this->bonus_payout_not_chosen];
     }
 
     public function userReports()

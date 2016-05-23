@@ -48,13 +48,13 @@ class SiteMakeReport extends Command
 
         $boot = new MonthlyReport();
 
-        $this->comment("Generating reports for site " . Site::key());
+        $this->comment('Generating reports for site ' . Site::key());
 
         Auth::setUser($userClass::admin());
 
         \DB::transaction(function () {
             foreach ($this->getLastThreeMonths() as $date) {
-                $this->comment("Generating report for " . $date);
+                $this->comment('Generating report for ' . $date);
 
                 $report = MonthlyReport::where('site_id', '=', Site::id())
                     ->where('month', '=', $date->month)
@@ -90,7 +90,7 @@ class SiteMakeReport extends Command
                         'bonus_payout_cash' => $userData->bonusPayoutForMonth->cash,
                         'bonus_payout_gold' => $userData->bonusPayoutForMonth->gold,
                         'bonus_payout_not_chosen' => $userData->bonusPayoutForMonth->bonusNotChosen,
-                        'online_payer' => (bool)$userData->onlinePayer,
+                        'online_payer' => (bool) $userData->onlinePayer,
                     ]);
                     $this->comment("  User Report created id:$userReport->id");
                 }

@@ -41,7 +41,6 @@ class ReportService
     public function getShortMonthName($startDate)
     {
         if ($startDate instanceof Carbon) {
-
         } else {
             $startDate = new Carbon($startDate);
         }
@@ -65,7 +64,6 @@ class ReportService
     public function getMonthlyOrderCount($startDate)
     {
         if ($startDate instanceof Carbon) {
-
         } else {
             $startDate = new Carbon($startDate);
         }
@@ -87,7 +85,6 @@ class ReportService
     public function getMonthlyNewUserCount($startDate)
     {
         if ($startDate instanceof Carbon) {
-
         } else {
             $startDate = new Carbon($startDate);
         }
@@ -128,6 +125,7 @@ class ReportService
             ->where('account_status', '=', 'approved')
             ->where('role_id', '<>', User::admin()->role_id)
             ->count();
+
         return $count;
     }
 
@@ -136,6 +134,7 @@ class ReportService
         $q = Order::forSite();
         $q = Order::whereApproved($q);
         $count = $q->count();
+
         return $count;
     }
 
@@ -146,16 +145,13 @@ class ReportService
         $q = $q->with('productPricing');
         $q = $q->where('created_at', '>=', ((new Carbon())->startOfMonth()));
 
-        if ($q->count() > 0)
-        {
+        if ($q->count() > 0) {
             $price = $q->get()->map(function ($e) {
                 return $e->productPricing ? $e->productPricing->amount : 0;
             });
 
             return $price->sum();
-        }
-        else
-        {
+        } else {
             return 0;
         }
     }
@@ -192,8 +188,7 @@ class ReportService
 
     public function getTotalBonusPayoutPerPerson()
     {
-        if (!config('bonus'))
-        {
+        if (!config('bonus')) {
             return [];
         }
 
@@ -212,7 +207,7 @@ class ReportService
         foreach ($g->keys() as $key) {
             $payoutPerPerson = $this->getTotalBonusPayoutForList(collect($g->get($key)));
 
-            $obj = (object)$payoutPerPerson;
+            $obj = (object) $payoutPerPerson;
 
             $payoutPerPerson['user_id'] = $key;
             $payoutPerPerson['total'] = $obj->cash + $obj->gold * 150 + $obj->bonusNotChosen * 150;
@@ -224,8 +219,7 @@ class ReportService
 
     public function getTotalBonusPayout()
     {
-        if (!config('bonus'))
-        {
+        if (!config('bonus')) {
             return [];
         }
 
@@ -241,13 +235,11 @@ class ReportService
 
     public function getBonusThisMonth($userId = false)
     {
-        if($userId == false)
-        {
+        if ($userId == false) {
             $userId = \Auth::user()->id;
         }
 
-        if (!config('bonus'))
-        {
+        if (!config('bonus')) {
             return [];
         }
 
@@ -302,6 +294,7 @@ class ReportService
         $q = $user->orders();
         $q = Order::whereApproved($q);
         $count = $q->count();
+
         return $count;
     }
 
@@ -324,6 +317,7 @@ class ReportService
         $q = $user->downLevels();
         $q = User::whereApproved($q);
         $count = $q->count();
+
         return $count;
     }
 
@@ -348,7 +342,7 @@ class ReportService
             return true;
         })->groupBy(function ($bonus) {
             if (!$bonus->bonusPayout) {
-                return "bonus-not-chosen";
+                return 'bonus-not-chosen';
             }
 
             return $bonus->bonusPayout->bonusCurrency->key;
@@ -377,7 +371,7 @@ class ReportService
     private function getReportForUser(Carbon $date, Carbon $end, $user, Collection $allApprovedOrders, Collection $allUsers, Collection $bonusForMonth)
     {
         $data = ['user' => null, 'totalApprovedOrders' => 0, 'totalIntroductions' => 0, 'totalStockists' => 0, 'totalBonus' => null, 'bonusPayoutForMonth' => null];
-        $data = (object)$data;
+        $data = (object) $data;
         $data->user = $user;
 
         $userApprovedOrders = $allApprovedOrders->filter(function ($order) use ($user) {
@@ -404,7 +398,7 @@ class ReportService
 
         $data->onlinePayer = BillplzResponse::getCountUserPay($user->id, $date, $end);
 
-        $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonthUsers);
+        $bonusPayoutForMonth = (object) $this->getTotalBonusPayoutForList($bonusForMonthUsers);
 
         $data->bonusPayoutForMonth = $bonusPayoutForMonth;
 
@@ -441,7 +435,7 @@ class ReportService
         $totalOrders = $allOrders->count();
 
         $allApprovedOrders = $allOrders->filter(function ($order) {
-            return !!$order->approved_at && $order->isApproved() && $order->proofOfTransfer != null;
+            return (bool) $order->approved_at && $order->isApproved() && $order->proofOfTransfer != null;
         });
 
         $totalApprovedOrders = $allApprovedOrders->count();
@@ -460,10 +454,9 @@ class ReportService
         });
 
         $bonusForMonth = new Collection();
-        $bonusPayoutForMonth = (object)['cash'=>0, 'gold' => 0, 'bonusNotChosen' => 0];
+        $bonusPayoutForMonth = (object) ['cash' => 0, 'gold' => 0, 'bonusNotChosen' => 0];
 
-        if (config('bonus'))
-        {
+        if (config('bonus')) {
             $bonusClass = config('bonus.bonus_model');
 
             $bonusForMonth = $bonusClass::forSite()
@@ -473,7 +466,7 @@ class ReportService
                 ->where('bonus_status_id', '=', BonusStatus::Active()->id)
                 ->get();
 
-            $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonth);
+            $bonusPayoutForMonth = (object) $this->getTotalBonusPayoutForList($bonusForMonth);
         }
 
         $userData = [];
@@ -483,17 +476,9 @@ class ReportService
             array_push($userData, $userReport);
         }
 
-        $data = ['year' => $year
-            , 'month' => $month
-            , 'totalOrders' => $totalOrders
-            , 'totalApprovedOrders' => $totalApprovedOrders
-            , 'newUsersCount' => $newUsersCount
-            , 'totalUsersCount' => $totalUsersCount
-            , 'totalRevenue' => $totalRevenue
-            , 'bonusPayoutForMonth' => $bonusPayoutForMonth
-            , 'userData' => $userData
+        $data = ['year' => $year, 'month' => $month, 'totalOrders' => $totalOrders, 'totalApprovedOrders' => $totalApprovedOrders, 'newUsersCount' => $newUsersCount, 'totalUsersCount' => $totalUsersCount, 'totalRevenue' => $totalRevenue, 'bonusPayoutForMonth' => $bonusPayoutForMonth, 'userData' => $userData,
         ];
 
-        return (object)$data;
+        return (object) $data;
     }
 }

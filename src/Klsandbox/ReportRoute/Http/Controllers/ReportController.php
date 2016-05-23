@@ -25,6 +25,7 @@ class ReportController extends Controller
     {
         Artisan::call('site:updatereport', ['--year' => $year, '--month' => $month]);
         Session::flash('success_message', 'Report has been refreshed.');
+
         return Redirect::back();
     }
 
@@ -50,7 +51,7 @@ class ReportController extends Controller
             });
         }
 
-        $hasBonus = !!config('bonus');
+        $hasBonus = (bool) config('bonus');
 
         return view('report-route::monthly-report')
             ->with('year', $year)

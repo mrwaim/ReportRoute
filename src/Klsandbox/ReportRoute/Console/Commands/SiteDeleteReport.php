@@ -10,7 +10,6 @@ use Klsandbox\SiteModel\Site;
 
 class SiteDeleteReport extends Command
 {
-
     /**
      * The console command name.
      *
@@ -41,18 +40,20 @@ class SiteDeleteReport extends Command
         $year = $this->argument('year');
 
         if (!$month || !$year) {
-            $this->error("Month or year not set");
+            $this->error('Month or year not set');
+
             return;
         }
 
-        $this->comment("Deleting report for site " . Site::key() . " year $year month $month");
+        $this->comment('Deleting report for site ' . Site::key() . " year $year month $month");
 
         $report = MonthlyReport::forSite()
             ->where('month', '=', $month)
             ->where('year', '=', $year)->first();
 
         if (!$report) {
-            $this->error("no report found");
+            $this->error('no report found');
+
             return;
         }
         $this->comment("deleting monthly report : $report->id");
@@ -76,5 +77,4 @@ class SiteDeleteReport extends Command
 
         $report->delete();
     }
-
 }

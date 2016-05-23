@@ -57,7 +57,8 @@ class SiteUpdateReport extends Command
         $year = $this->option('year');
 
         if (!$month || !$year) {
-            $this->error("Month or year not set");
+            $this->error('Month or year not set');
+
             return;
         }
 
@@ -66,7 +67,8 @@ class SiteUpdateReport extends Command
             ->where('year', '=', $year)->first();
 
         if (!$report) {
-            $this->error("no report found");
+            $this->error('no report found');
+
             return;
         }
 
@@ -74,7 +76,7 @@ class SiteUpdateReport extends Command
 
         $userClass = config('auth.model');
 
-        $this->comment("Generating reports for site " . Site::key());
+        $this->comment('Generating reports for site ' . Site::key());
 
         Auth::setUser($userClass::admin());
 
@@ -124,7 +126,7 @@ class SiteUpdateReport extends Command
                     'bonus_payout_cash' => $userData->bonusPayoutForMonth->cash,
                     'bonus_payout_gold' => $userData->bonusPayoutForMonth->gold,
                     'bonus_payout_not_chosen' => $userData->bonusPayoutForMonth->bonusNotChosen,
-                    'online_payer' => (bool)$userData->onlinePayer,
+                    'online_payer' => (bool) $userData->onlinePayer,
                 ]);
                 $this->comment("  User Report created id:$userReport->id");
             }
