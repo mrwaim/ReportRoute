@@ -142,15 +142,17 @@ class ReportService
     {
         $q = Order::forSite();
         $q = Order::whereApproved($q);
-        $q = $q->with('productPricing');
+        $q = $q->with('proofOfTransfer');
         $q = $q->where('created_at', '>=', ((new Carbon())->startOfMonth()));
 
         if ($q->count() > 0) {
-            $price = $q->get()->map(function ($e) {
-                return $e->productPricing ? $e->productPricing->amount : 0;
-            });
+            $total = 0;
+            foreach ($q->get() as $order)
+            {
+                $total += $order->proofOfTransfer->amount;
+            }
 
-            return $price->sum();
+            return $total;
         } else {
             return 0;
         }
