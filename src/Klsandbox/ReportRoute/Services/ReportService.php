@@ -148,7 +148,10 @@ class ReportService
         if ($q->count() > 0) {
             $total = 0;
             foreach ($q->get() as $order) {
-                $total += $order->proofOfTransfer->amount;
+                if ($order->proofOfTransfer)
+                {
+                    $total += $order->proofOfTransfer->amount;
+                }
             }
 
             return $total;
