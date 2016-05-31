@@ -18,7 +18,6 @@ use Log;
  * @property integer $introductions_count
  * @property integer $total_stockist_count
  * @property-read \App\Models\User $user
- *
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereSiteId($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereId($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereCreatedAt($value)
@@ -28,17 +27,13 @@ use Log;
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereOrdersCount($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereIntroductionsCount($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereTotalStockistCount($value)
- *
  * @property integer $bonus_payout_cash
  * @property integer $bonus_payout_gold
  * @property integer $bonus_payout_not_chosen
- *
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereBonusPayoutCash($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereBonusPayoutGold($value)
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereBonusPayoutNotChosen($value)
- *
  * @property boolean $online_payer
- *
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereOnlinePayer($value)
  * @mixin \Eloquent
  */
