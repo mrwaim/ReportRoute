@@ -213,7 +213,7 @@ class ReportService
         foreach ($g->keys() as $key) {
             $payoutPerPerson = $this->getTotalBonusPayoutForList(collect($g->get($key)));
 
-            $obj = (object)$payoutPerPerson;
+            $obj = (object) $payoutPerPerson;
 
             $payoutPerPerson['user_id'] = $key;
             $payoutPerPerson['total'] = $obj->cash + $obj->gold * 150 + $obj->bonusNotChosen * 150;
@@ -377,7 +377,7 @@ class ReportService
     private function getReportForUser(Carbon $date, Carbon $end, $user, Collection $allApprovedOrders, Collection $allUsers, Collection $bonusForMonth)
     {
         $data = ['user' => null, 'totalApprovedOrders' => 0, 'totalIntroductions' => 0, 'totalStockists' => 0, 'totalBonus' => null, 'bonusPayoutForMonth' => null];
-        $data = (object)$data;
+        $data = (object) $data;
         $data->user = $user;
 
         $userApprovedOrders = $allApprovedOrders->filter(function ($order) use ($user) {
@@ -404,7 +404,7 @@ class ReportService
 
         $data->onlinePayer = BillplzResponse::getCountUserPay($user->id, $date, $end);
 
-        $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonthUsers);
+        $bonusPayoutForMonth = (object) $this->getTotalBonusPayoutForList($bonusForMonthUsers);
 
         $data->bonusPayoutForMonth = $bonusPayoutForMonth;
 
@@ -441,7 +441,7 @@ class ReportService
         $totalOrders = $allOrders->count();
 
         $allApprovedOrders = $allOrders->filter(function ($order) {
-            return (bool)$order->approved_at && $order->isApproved() && $order->proofOfTransfer != null;
+            return (bool) $order->approved_at && $order->isApproved() && $order->proofOfTransfer != null;
         });
 
         $totalApprovedOrders = $allApprovedOrders->count();
@@ -460,7 +460,7 @@ class ReportService
         });
 
         $bonusForMonth = new Collection();
-        $bonusPayoutForMonth = (object)['cash' => 0, 'gold' => 0, 'bonusNotChosen' => 0];
+        $bonusPayoutForMonth = (object) ['cash' => 0, 'gold' => 0, 'bonusNotChosen' => 0];
 
         if (config('bonus')) {
             $bonusClass = config('bonus.bonus_model');
@@ -472,7 +472,7 @@ class ReportService
                 ->where('bonus_status_id', '=', BonusStatus::Active()->id)
                 ->get();
 
-            $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonth);
+            $bonusPayoutForMonth = (object) $this->getTotalBonusPayoutForList($bonusForMonth);
         }
 
         $userData = [];
@@ -485,6 +485,6 @@ class ReportService
         $data = ['year' => $year, 'month' => $month, 'totalOrders' => $totalOrders, 'totalApprovedOrders' => $totalApprovedOrders, 'newUsersCount' => $newUsersCount, 'totalUsersCount' => $totalUsersCount, 'totalRevenue' => $totalRevenue, 'bonusPayoutForMonth' => $bonusPayoutForMonth, 'userData' => $userData,
         ];
 
-        return (object)$data;
+        return (object) $data;
     }
 }
