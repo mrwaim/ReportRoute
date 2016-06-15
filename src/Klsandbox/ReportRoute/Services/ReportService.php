@@ -17,6 +17,10 @@ class ReportService
 {
     private function getMonthlyCount(Collection $collection, Carbon $startDate)
     {
+        $groups = $collection->groupBy(function ($e) {
+            return $e->created_at->startOfMonth()->timestamp;
+        });
+
         $list = [];
         for ($i = 12; $i >= 0; --$i) {
             $start = new Carbon();
@@ -26,12 +30,21 @@ class ReportService
             $end->addMonths(-$i);
             $end->endOfMonth();
 
-            $itemsInMonth = $collection->filter(function ($item) use ($start, $end) {
-                return $item->created_at >= $start && $item->created_at <= $end;
-            });
+            $count = 0;
+            foreach ($groups->keys() as $timestamp)
+            {
+                if ($timestamp >= $start->timestamp && $timestamp < $end->timestamp)
+                {
+                    $count += $groups->get($timestamp)->count();
+                }
+            }
 
+//            $itemsInMonth = $collection->filter(function ($item) use ($start, $end) {
+//                return $item->created_at >= $start && $item->created_at <= $end;
+//            });
+//
             if ($startDate->lte($start)) {
-                array_push($list, $itemsInMonth->count());
+                array_push($list, $count);
             }
         }
 
@@ -77,7 +90,7 @@ class ReportService
             $q = $q->where('user_id', '=', Auth::user()->id);
         }
 
-        $orders = $q->get();
+        $orders = $q->select('created_at')->get();
 
         return $this->getMonthlyCount($orders, $startDate);
     }
@@ -103,6 +116,7 @@ class ReportService
         }
 
         $users = $q
+            ->select('created_at')
             ->get();
 
         return $this->getMonthlyCount($users, $startDate);
