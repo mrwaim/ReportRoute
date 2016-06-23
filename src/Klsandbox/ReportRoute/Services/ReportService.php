@@ -31,10 +31,8 @@ class ReportService
             $end->endOfMonth();
 
             $count = 0;
-            foreach ($groups->keys() as $timestamp)
-            {
-                if ($timestamp >= $start->timestamp && $timestamp < $end->timestamp)
-                {
+            foreach ($groups->keys() as $timestamp) {
+                if ($timestamp >= $start->timestamp && $timestamp < $end->timestamp) {
                     $count += $groups->get($timestamp)->count();
                 }
             }
