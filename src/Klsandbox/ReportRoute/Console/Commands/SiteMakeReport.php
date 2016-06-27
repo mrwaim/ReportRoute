@@ -2,6 +2,7 @@
 
 namespace Klsandbox\ReportRoute\Console\Commands;
 
+use App\Models\Organization;
 use Klsandbox\ReportRoute\Models\MonthlyReport;
 use Klsandbox\ReportRoute\Models\MonthlyUserReport;
 use Klsandbox\ReportRoute\Services\ReportService;
@@ -53,55 +54,75 @@ class SiteMakeReport extends Command
         Auth::setUser($userClass::admin());
 
         \DB::transaction(function () {
-            foreach ($this->getLastThreeMonths() as $date) {
-                $this->comment('Generating report for ' . $date);
+            $this->generateReport(true, null);
 
-                $report = MonthlyReport::where('site_id', '=', Site::id())
-                    ->where('month', '=', $date->month)
-                    ->where('year', '=', $date->year)
-                    ->first();
-                if ($report) {
-                    $this->comment("Report exists id:$report->id skipping");
-                    continue;
-                }
-
-                $data = $this->reportService->getMonthlyReport($date->year, $date->month);
-                $report = MonthlyReport::create([
-                    'year' => $data->year,
-                    'month' => $data->month,
-                    'orders_count' => $data->totalOrders,
-                    'approved_orders_count' => $data->totalApprovedOrders,
-                    'new_users_count' => $data->newUsersCount,
-                    'total_users_count' => $data->totalUsersCount,
-                    'total_revenue' => $data->totalRevenue,
-                    'bonus_payout_cash' => $data->bonusPayoutForMonth->cash,
-                    'bonus_payout_gold' => $data->bonusPayoutForMonth->gold,
-                    'bonus_payout_not_chosen' => $data->bonusPayoutForMonth->bonusNotChosen,
-                ]);
-
-                $this->comment("Report created id:$report->id");
-                foreach ($data->userData as $userData) {
-                    $userReport = MonthlyUserReport::create([
-                        'monthly_report_id' => $report->id,
-                        'user_id' => $userData->user->id,
-                        'orders_count' => $userData->totalApprovedOrders,
-                        'introductions_count' => $userData->totalIntroductions,
-                        'total_stockist_count' => $userData->totalStockists,
-                        'bonus_payout_cash' => $userData->bonusPayoutForMonth->cash,
-                        'bonus_payout_gold' => $userData->bonusPayoutForMonth->gold,
-                        'bonus_payout_not_chosen' => $userData->bonusPayoutForMonth->bonusNotChosen,
-                        'online_payer' => (bool) $userData->onlinePayer,
-                    ]);
-                    $this->comment("  User Report created id:$userReport->id");
-                }
+            foreach (Organization::all() as $organization)
+            {
+                $this->generateReport(false, $organization->id);
             }
         });
+    }
+
+
+    /**
+     * @param $this
+     * @param $is_hq
+     * @param $organization_id
+     */
+    function generateReport($is_hq, $organization_id)
+    {
+        foreach ($this->getLastThreeMonths() as $date) {
+            $this->comment('Generating report for ' . $date);
+
+            $report = MonthlyReport::where('site_id', '=', Site::id())
+                ->where('month', '=', $date->month)
+                ->where('year', '=', $date->year)
+                ->where('is_hq', '=', $is_hq)
+                ->where('organization_id', '=', $organization_id)
+                ->first();
+            if ($report) {
+                $this->comment("Report exists id:$report->id skipping");
+                continue;
+            }
+
+            $data = $this->reportService->getMonthlyReport($date->year, $date->month, $is_hq, $organization_id);
+            $report = MonthlyReport::create([
+                'year' => $data->year,
+                'month' => $data->month,
+                'orders_count' => $data->totalOrders,
+                'approved_orders_count' => $data->totalApprovedOrders,
+                'new_users_count' => $data->newUsersCount,
+                'total_users_count' => $data->totalUsersCount,
+                'total_revenue' => $data->totalRevenue,
+                'bonus_payout_cash' => $data->bonusPayoutForMonth->cash,
+                'bonus_payout_gold' => $data->bonusPayoutForMonth->gold,
+                'bonus_payout_not_chosen' => $data->bonusPayoutForMonth->bonusNotChosen,
+                'is_hq' => $is_hq,
+                'organization_id' => $organization_id,
+            ]);
+
+            $this->comment("Report created id:$report->id");
+            foreach ($data->userData as $userData) {
+                $userReport = MonthlyUserReport::create([
+                    'monthly_report_id' => $report->id,
+                    'user_id' => $userData->user->id,
+                    'orders_count' => $userData->totalApprovedOrders,
+                    'introductions_count' => $userData->totalIntroductions,
+                    'total_stockist_count' => $userData->totalStockists,
+                    'bonus_payout_cash' => $userData->bonusPayoutForMonth->cash,
+                    'bonus_payout_gold' => $userData->bonusPayoutForMonth->gold,
+                    'bonus_payout_not_chosen' => $userData->bonusPayoutForMonth->bonusNotChosen,
+                    'online_payer' => (bool)$userData->onlinePayer,
+                ]);
+                $this->comment("  User Report created id:$userReport->id");
+            }
+        }
     }
 
     public function getLastThreeMonths()
     {
         $list = [];
-        for ($i = 3; $i >= 0; --$i) {
+        for ($i = 3; $i >= -1; --$i) {
             $start = new Carbon();
             $start->startOfMonth();
             $start->addMonths(-$i - 1);

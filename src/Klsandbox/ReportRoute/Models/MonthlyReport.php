@@ -2,6 +2,7 @@
 
 namespace Klsandbox\ReportRoute\Models;
 
+use App\Models\Organization;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -121,4 +122,10 @@ class MonthlyReport extends Model
 
         return $data;
     }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
 }

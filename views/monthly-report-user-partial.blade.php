@@ -1,6 +1,6 @@
 <section class="panel">
     <header class="panel-heading">
-        <h2 class="panel-title">User Report for {{$month}} {{$year}}</h2>
+        <h2 class="panel-title">User Report for {{$month}} of {{$year}} for {{$for}}</h2>
     </header>
 
     <div class="panel-body">
@@ -30,7 +30,7 @@
                                 BLOCKED
                             @endif
                         </td>
-                        <td class="text-center">{{$data->user->role->name}}</td>
+                        <td class="text-center">{{$data->user->getDisplayRole()}}</td>
                         <td class="text-center text-nowrap">{{$data->user->bank_name}}<br>{{$data->user->bank_account}}
                         </td>
                         <td class="text-center">{{$data->orders_count}}</td>

@@ -1,6 +1,19 @@
 @include('elements.side-menu-parent-item', [
-'folder' => 'report',
-'menu' => 'Monthly Reports',
-'menuIcon' => 'fa-calendar',
-'url' => 'monthly-report-list'
+    'folder' => 'report',
+    'menu' => 'Monthly Reports',
+    'menuIcon' => 'fa-calendar',
+    'children' => [
+        [
+            'url'  => 'monthly-report-list/hq',
+            'menu'  => 'Monthly Reports (HQ)',
+            ],
+        [
+            'url'  => 'monthly-report-list/org',
+            'menu'  => 'Monthly Reports (BioKare)',
+            ],
+        [
+            'url'  => 'monthly-report-list/pl',
+            'menu'  => 'Monthly Reports (PL)',
+        ],
+    ]
 ])

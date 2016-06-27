@@ -81,6 +81,10 @@ class SiteUpdateReport extends Command
         Auth::setUser($userClass::admin());
 
         \DB::transaction(function () use ($report, $year, $month) {
+
+            $is_hq = true;
+            $organization_id = null;
+
             $userReports = MonthlyUserReport::forSite()
                 ->where('monthly_report_id', '=', $report->id)
                 ->get();
@@ -99,7 +103,7 @@ class SiteUpdateReport extends Command
                 $paymentApprovalReport->save();
             }
 
-            $data = $this->reportService->getMonthlyReport($year, $month);
+            $data = $this->reportService->getMonthlyReport($year, $month, $is_hq, $organization_id);
             $report = $report->fill([
                 'year' => $data->year,
                 'month' => $data->month,
@@ -111,6 +115,8 @@ class SiteUpdateReport extends Command
                 'bonus_payout_cash' => $data->bonusPayoutForMonth->cash,
                 'bonus_payout_gold' => $data->bonusPayoutForMonth->gold,
                 'bonus_payout_not_chosen' => $data->bonusPayoutForMonth->bonusNotChosen,
+                'is_hq' => $is_hq,
+                'organization_id' => $organization_id,
             ]);
 
             $report->save();

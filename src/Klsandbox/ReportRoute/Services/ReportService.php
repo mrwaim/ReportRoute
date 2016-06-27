@@ -12,6 +12,7 @@ use Klsandbox\BillplzRoute\Models\BillplzResponse;
 use Klsandbox\BonusModel\Models\BonusCurrency;
 use Klsandbox\BonusModel\Models\BonusStatus;
 use Klsandbox\OrderModel\Models\OrderStatus;
+use Klsandbox\RoleModel\Role;
 
 class ReportService
 {
@@ -225,7 +226,7 @@ class ReportService
         foreach ($g->keys() as $key) {
             $payoutPerPerson = $this->getTotalBonusPayoutForList(collect($g->get($key)));
 
-            $obj = (object) $payoutPerPerson;
+            $obj = (object)$payoutPerPerson;
 
             $payoutPerPerson['user_id'] = $key;
             $payoutPerPerson['total'] = $obj->cash + $obj->gold * 150 + $obj->bonusNotChosen * 150;
@@ -386,10 +387,17 @@ class ReportService
         return $list;
     }
 
-    private function getReportForUser(Carbon $date, Carbon $end, $user, Collection $allApprovedOrders, Collection $allUsers, Collection $bonusForMonth)
+    private function getReportForUser(
+        Carbon $date,
+        Carbon $end,
+        $user,
+        Collection $allApprovedOrders,
+        Collection $allUsers,
+        Collection $bonusForMonth,
+        $is_hq)
     {
         $data = ['user' => null, 'totalApprovedOrders' => 0, 'totalIntroductions' => 0, 'totalStockists' => 0, 'totalBonus' => null, 'bonusPayoutForMonth' => null];
-        $data = (object) $data;
+        $data = (object)$data;
         $data->user = $user;
 
         $userApprovedOrders = $allApprovedOrders->filter(function ($order) use ($user) {
@@ -398,8 +406,12 @@ class ReportService
 
         $data->totalApprovedOrders = $userApprovedOrders->count();
 
-        $allDownLevelUsers = $allUsers->filter(function ($downLevel) use ($user) {
-            return $user->id == $downLevel->referral_id || $user->id == $downLevel->new_referral_id;
+        $allDownLevelUsers = $allUsers->filter(function ($downLevel) use ($user, $is_hq) {
+            if ($is_hq) {
+                return $user->id == $downLevel->referral_id;
+            } else {
+                return $user->id == $downLevel->new_referral_id;
+            }
         });
 
         $data->totalStockists = $allDownLevelUsers->count();
@@ -416,14 +428,14 @@ class ReportService
 
         $data->onlinePayer = BillplzResponse::getCountUserPay($user->id, $date, $end);
 
-        $bonusPayoutForMonth = (object) $this->getTotalBonusPayoutForList($bonusForMonthUsers);
+        $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonthUsers);
 
         $data->bonusPayoutForMonth = $bonusPayoutForMonth;
 
         return $data;
     }
 
-    public function getMonthlyReport($year, $month)
+    public function getMonthlyReport($year, $month, $is_hq, $organization_id = null)
     {
         $userClass = config('auth.model');
 
@@ -450,10 +462,27 @@ class ReportService
             ->where('account_status', '=', 'Approved')
             ->get();
 
+        $allUsers = $allUsers->filter(function ($user) use ($is_hq, $organization_id) {
+            if ($is_hq) {
+                return $user->referral_id;
+            } else {
+                return $user->organization_id == $organization_id;
+            }
+        });
+
+        $allOrders = $allOrders->filter(function ($order) use ($is_hq, $organization_id) {
+            return
+                ($order->is_hq == $is_hq)
+                && ($is_hq || $order->organization_id == $organization_id);
+        });
+
         $totalOrders = $allOrders->count();
 
-        $allApprovedOrders = $allOrders->filter(function ($order) {
-            return (bool) $order->approved_at && $order->isApproved() && $order->proofOfTransfer != null;
+        $allApprovedOrders = $allOrders->filter(function ($order) use ($is_hq, $organization_id) {
+            return
+                (bool)$order->approved_at
+                && $order->isApproved()
+                && $order->proofOfTransfer != null;
         });
 
         $totalApprovedOrders = $allApprovedOrders->count();
@@ -472,7 +501,7 @@ class ReportService
         });
 
         $bonusForMonth = new Collection();
-        $bonusPayoutForMonth = (object) ['cash' => 0, 'gold' => 0, 'bonusNotChosen' => 0];
+        $bonusPayoutForMonth = (object)['cash' => 0, 'gold' => 0, 'bonusNotChosen' => 0];
 
         if (config('bonus')) {
             $bonusClass = config('bonus.bonus_model');
@@ -481,22 +510,32 @@ class ReportService
                 ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
                 ->where('created_at', '>=', $date)
                 ->where('created_at', '<=', $end)
-                ->where('bonus_status_id', '=', BonusStatus::Active()->id)
-                ->get();
+                ->where('bonus_status_id', '=', BonusStatus::Active()->id);
 
-            $bonusPayoutForMonth = (object) $this->getTotalBonusPayoutForList($bonusForMonth);
+            if ($organization_id) {
+                $bonusForMonth = $bonusForMonth->where('awarded_by_organization_id', '=', $organization_id);
+            }
+
+            $bonusForMonth = $bonusForMonth->get();
+
+            $bonusForMonth->load('orderItem.productPricing.product');
+            $bonusForMonth = $bonusForMonth->filter(function ($bonus) use ($is_hq) {
+                return $bonus->orderItem->productPricing->product->is_hq == $is_hq;
+            });
+
+            $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonth);
         }
 
         $userData = [];
 
         foreach ($allUsers as $user) {
-            $userReport = $this->getReportForUser($date, $end, $user, $allApprovedOrders, $allUsers, $bonusForMonth);
+            $userReport = $this->getReportForUser($date, $end, $user, $allApprovedOrders, $allUsers, $bonusForMonth, $is_hq, $organization_id);
             array_push($userData, $userReport);
         }
 
         $data = ['year' => $year, 'month' => $month, 'totalOrders' => $totalOrders, 'totalApprovedOrders' => $totalApprovedOrders, 'newUsersCount' => $newUsersCount, 'totalUsersCount' => $totalUsersCount, 'totalRevenue' => $totalRevenue, 'bonusPayoutForMonth' => $bonusPayoutForMonth, 'userData' => $userData,
         ];
 
-        return (object) $data;
+        return (object)$data;
     }
 }

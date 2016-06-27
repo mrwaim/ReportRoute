@@ -2,6 +2,8 @@
 
 namespace Klsandbox\ReportRoute\Http\Controllers;
 
+use App\Models\Organization;
+use Illuminate\Support\Facades\Input;
 use Klsandbox\ReportRoute\Models\MonthlyReport;
 use Artisan;
 use Session;
@@ -29,12 +31,18 @@ class ReportController extends Controller
         return Redirect::back();
     }
 
-    public function getMonthlyReport($year, $month, $filter)
+    public function getMonthlyReport($year, $month, $is_hq, $organization_id, $filter)
     {
         $report = MonthlyReport::forSite()
             ->where('year', '=', $year)
             ->where('month', '=', $month)
-            ->with('userReports')
+            ->where('is_hq', '=', $is_hq);
+
+        if ($organization_id) {
+            $report = $report->where('organization_id', '=', $organization_id);
+        }
+
+        $report = $report->with('userReports')
             ->first();
 
         Site::protect($report, 'Report');
@@ -51,7 +59,7 @@ class ReportController extends Controller
             });
         }
 
-        $hasBonus = (bool) config('bonus');
+        $hasBonus = (bool)config('bonus');
 
         return view('report-route::monthly-report')
             ->with('year', $year)
@@ -64,15 +72,32 @@ class ReportController extends Controller
             ->with('bonusPayoutForMonth', $report->getBonusPayout())
             ->with('userData', $userReports)
             ->with('filter', $filter)
-            ->with('has_bonus', $hasBonus);
+            ->with('has_bonus', $hasBonus)
+            ->with('for', $is_hq ? 'HQ' : Organization::find($organization_id)->name);
     }
 
-    public function getMonthlyReportList()
+    public function getMonthlyReportList($filter)
     {
-        $list = MonthlyReport::forSite()
-            ->orderBy('year', 'DESC')
+        $q = MonthlyReport::forSite();
+
+        $q = $q->where('is_hq', '=', $filter == 'hq');
+
+        if ($filter == 'org') {
+            $q = $q->where('organization_id', '=', Organization::HQ()->id);
+        } elseif ($filter == 'pl') {
+            $q = $q->where('organization_id', '<>', Organization::HQ()->id);
+        }
+
+        $show_all = Input::get('show_all');
+
+        if (!$show_all) {
+            $q = $q->where('orders_count', '>', 0);
+        }
+
+
+        $list = $q->orderBy('year', 'DESC')
             ->orderBy('month', 'DESC')
-            ->paginate(10);
+            ->paginate(50);
 
         return view('report-route::list-monthly-report')->with('list', $list);
     }

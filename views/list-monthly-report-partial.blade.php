@@ -7,6 +7,8 @@
             <table class="table table-bordered table-striped table-condensed mb-none">
                 <thead>
                 <tr>
+                    <th class="text-center">HQ</th>
+                    <th class="text-center">Organization</th>
                     <th class="text-center">Date</th>
                     <th class="text-center">Order Count</th>
                     <th class="text-center">Approved Order Count</th>
@@ -19,14 +21,16 @@
                 <tbody>
                 @foreach($list as $item)
                     <tr name="report_row">
+                        <td class="text-center">{{$item->is_hq !== false ? 'HQ' : 'Organization'}}</td>
+                        <td class="text-center">{{$item->organization ? $item->organization->name : ''}}</td>
                         <td class="text-center">
                             {{$item->year}}
                             /{{$item->month}}
                             <br/>
                             <a name="report_link"
-                               href='/report/monthly-report/{{$item->year}}/{{$item->month}}/all'>All Users</a> |
+                               href='/report/monthly-report/{{$item->year}}/{{$item->month}}/{{$item->is_hq ? '1' : '0'}}/{{$item->organization ? $item->organization->id : '0'}}/all'>All Users</a> |
                             <a name="report_link"
-                               href='/report/monthly-report/{{$item->year}}/{{$item->month}}/active'>Active Users</a>
+                               href='/report/monthly-report/{{$item->year}}/{{$item->month}}/{{$item->is_hq ? '1' : '0'}}/{{$item->organization ? $item->organization->id : '0'}}/active'>Active Users</a>
                         </td>
                         <td class="text-center">{{$item->orders_count}}</td>
                         <td class="text-center">{{$item->approved_orders_count}}</td>
