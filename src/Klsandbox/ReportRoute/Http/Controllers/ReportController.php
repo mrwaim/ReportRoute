@@ -73,7 +73,9 @@ class ReportController extends Controller
             ->with('userData', $userReports)
             ->with('filter', $filter)
             ->with('has_bonus', $hasBonus)
-            ->with('for', $is_hq ? 'HQ' : Organization::find($organization_id)->name);
+            ->with('for', $is_hq ? 'HQ' : Organization::find($organization_id)->name)
+            ->with('report', $report)
+            ;
     }
 
     public function getMonthlyReportList($filter)

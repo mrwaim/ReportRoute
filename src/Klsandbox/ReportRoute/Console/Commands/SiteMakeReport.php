@@ -99,6 +99,7 @@ class SiteMakeReport extends Command
                 'bonus_payout_not_chosen' => $data->bonusPayoutForMonth->bonusNotChosen,
                 'is_hq' => $is_hq,
                 'organization_id' => $organization_id,
+                'draft' => $date == (new Carbon())->startOfMonth(),
             ]);
 
             $this->comment("Report created id:$report->id");

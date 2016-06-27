@@ -1,6 +1,6 @@
 <section class="panel">
     <header class="panel-heading">
-        <h2 class="panel-title">User Report for {{$month}} of {{$year}} for {{$for}}</h2>
+        <h2 class="panel-title">User Report for {{DateTime::createFromFormat('!m', $month)->format('F')}}, {{$year}} for {{$for}} {{$report->draft ? '(Draft Report)' : ''}}</h2>
     </header>
 
     <div class="panel-body">

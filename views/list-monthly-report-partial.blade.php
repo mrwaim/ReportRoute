@@ -26,6 +26,9 @@
                         <td class="text-center">
                             {{$item->year}}
                             /{{$item->month}}
+                            @if($item->draft)
+                                (Draft)
+                            @endif
                             <br/>
                             <a name="report_link"
                                href='/report/monthly-report/{{$item->year}}/{{$item->month}}/{{$item->is_hq ? '1' : '0'}}/{{$item->organization ? $item->organization->id : '0'}}/all'>All Users</a> |
