@@ -36,6 +36,7 @@ use Log;
  * @property boolean $online_payer
  * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyUserReport whereOnlinePayer($value)
  * @mixin \Eloquent
+ * @property-read \Klsandbox\ReportRoute\Models\MonthlyReport $monthlyReport
  */
 class MonthlyUserReport extends Model
 {
