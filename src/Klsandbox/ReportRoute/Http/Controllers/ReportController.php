@@ -34,7 +34,7 @@ class ReportController extends Controller
 
     public function getMonthlyReport($year, $month, $is_hq, $organization_id, $filter)
     {
-        $report = MonthlyReport::for($is_hq, $organization_id)
+        $report = MonthlyReport::forOrganization($is_hq, $organization_id)
             ->where('year', '=', $year)
             ->where('month', '=', $month);
 

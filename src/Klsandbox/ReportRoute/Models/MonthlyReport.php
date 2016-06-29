@@ -96,7 +96,7 @@ class MonthlyReport extends Model
      * @param $organization_id
      * @return Builder
      */
-    public static function for ($is_hq, $organization_id)
+    public static function forOrganization($is_hq, $organization_id)
     {
         $report = self::where('is_hq', '=', $is_hq);
 
@@ -112,7 +112,7 @@ class MonthlyReport extends Model
 
     public static function getBonusPaymentsList($is_hq, $organization_id)
     {
-        $data = self::for($is_hq, $organization_id)->get();
+        $data = self::forOrganization($is_hq, $organization_id)->get();
 
         /**
          * @var MonthlyReport $itm
