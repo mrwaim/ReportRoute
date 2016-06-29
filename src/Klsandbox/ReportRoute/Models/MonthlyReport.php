@@ -5,6 +5,7 @@ namespace Klsandbox\ReportRoute\Models;
 use App\Models\Organization;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Klsandbox\BillplzRoute\Models\BillplzResponse;
 use Klsandbox\NotificationService\Models\NotificationRequest;
@@ -45,6 +46,15 @@ use Log;
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\MonthlyUserReport[] $userReports
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\PaymentsApprovals[] $userPaymentsApprovals
  * @mixin \Eloquent
+ * @property boolean $is_hq
+ * @property integer $organization_id
+ * @property integer $admin_id
+ * @property boolean $draft
+ * @property-read \App\Models\Organization $organization
+ * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereIsHq($value)
+ * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereOrganizationId($value)
+ * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereAdminId($value)
+ * @method static \Illuminate\Database\Query\Builder|\Klsandbox\ReportRoute\Models\MonthlyReport whereDraft($value)
  */
 class MonthlyReport extends Model
 {
@@ -68,7 +78,7 @@ class MonthlyReport extends Model
 
     public function getBonusPayout()
     {
-        return (object) ['cash' => $this->bonus_payout_cash, 'gold' => $this->bonus_payout_gold, 'bonusNotChosen' => $this->bonus_payout_not_chosen];
+        return (object)['cash' => $this->bonus_payout_cash, 'gold' => $this->bonus_payout_gold, 'bonusNotChosen' => $this->bonus_payout_not_chosen];
     }
 
     public function userReports()
@@ -81,10 +91,32 @@ class MonthlyReport extends Model
         return $this->hasMany('App\Models\PaymentsApprovals');
     }
 
-    public static function getBonusPaymentsList()
+    /**
+     * @param $is_hq
+     * @param $organization_id
+     * @return Builder
+     */
+    public static function for ($is_hq, $organization_id)
     {
-        $data = self::orderBy('year', 'DESC')->orderBy('month', 'DESC')->get();
+        $report = self::where('is_hq', '=', $is_hq);
 
+        if ($organization_id) {
+            $report = $report->where('organization_id', '=', $organization_id);
+        }
+
+        $report = $report->orderBy('year', 'DESC')
+            ->orderBy('month', 'DESC');
+
+        return $report;
+    }
+
+    public static function getBonusPaymentsList($is_hq, $organization_id)
+    {
+        $data = self::for($is_hq, $organization_id)->get();
+
+        /**
+         * @var MonthlyReport $itm
+         */
         foreach ($data as $key => $itm) {
             $online_users = [];
             $data[$key]['approve_online'] = $itm->userPaymentsApprovals()->where('approved_state', 'approve')->where('user_type', 'online')->count();
@@ -96,7 +128,7 @@ class MonthlyReport extends Model
             $end_date = new Carbon(date("{$itm->year}-{$itm->month}-01"));
             $end_date->endOfMonth();
 
-            $report = $itm->userReports();
+            $report = $itm->userReports()->getQuery();
 
             $online_users_data = BillplzResponse
                 ::forSite()
@@ -113,11 +145,17 @@ class MonthlyReport extends Model
 
             $report = $report->where('bonus_payout_cash', '>', 0);
 
-            $online = (!empty($online_users)) ? $report->whereIn('user_id', $online_users)->count() : 0;
-            $manual = (!empty($online_users)) ? $report->whereNotIn('user_id', $online_users)->count() : $report->count();
+            $onlineReport = clone $report;
+            $manualReport = clone $report;
+
+            $online = (!empty($online_users)) ? $onlineReport->whereIn('user_id', $online_users)->count() : 0;
+            $manual = (!empty($online_users)) ? $manualReport->whereNotIn('user_id', $online_users)->count() : $manualReport->count();
 
             $data[$key]['not_reviewed_online'] = $online - ($data[$key]['approve_online'] + $data[$key]['reject_online']);
             $data[$key]['not_reviewed_manual'] = $manual - ($data[$key]['approve_manual'] + $data[$key]['reject_manual']);
+
+            assert($data[$key]['not_reviewed_online'] >= 0);
+            assert($data[$key]['not_reviewed_manual'] >= 0);
         }
 
         return $data;

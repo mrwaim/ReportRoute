@@ -58,4 +58,9 @@ class MonthlyUserReport extends Model
     {
         return $this->belongsTo(config('auth.model'));
     }
+
+    public function monthlyReport()
+    {
+        return $this->belongsTo(MonthlyReport::class);
+    }
 }

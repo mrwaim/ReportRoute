@@ -3,6 +3,7 @@
 namespace Klsandbox\ReportRoute\Console\Commands;
 
 use App\Models\Organization;
+use App\Models\User;
 use Klsandbox\ReportRoute\Models\MonthlyReport;
 use Klsandbox\ReportRoute\Models\MonthlyUserReport;
 use Klsandbox\ReportRoute\Services\ReportService;
@@ -100,6 +101,7 @@ class SiteMakeReport extends Command
                 'is_hq' => $is_hq,
                 'organization_id' => $organization_id,
                 'draft' => $date == (new Carbon())->startOfMonth(),
+                'admin_id' => $is_hq ? User::admin()->id : Organization::find($organization_id)->admin_id,
             ]);
 
             $this->comment("Report created id:$report->id");

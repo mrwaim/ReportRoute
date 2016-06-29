@@ -3,6 +3,7 @@
 namespace Klsandbox\ReportRoute\Http\Controllers;
 
 use App\Models\Organization;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
 use Klsandbox\ReportRoute\Models\MonthlyReport;
 use Artisan;
@@ -33,14 +34,9 @@ class ReportController extends Controller
 
     public function getMonthlyReport($year, $month, $is_hq, $organization_id, $filter)
     {
-        $report = MonthlyReport::forSite()
+        $report = MonthlyReport::for($is_hq, $organization_id)
             ->where('year', '=', $year)
-            ->where('month', '=', $month)
-            ->where('is_hq', '=', $is_hq);
-
-        if ($organization_id) {
-            $report = $report->where('organization_id', '=', $organization_id);
-        }
+            ->where('month', '=', $month);
 
         $report = $report->with('userReports')
             ->first();
@@ -85,7 +81,7 @@ class ReportController extends Controller
         $q = $q->where('is_hq', '=', $filter == 'hq');
 
         if ($filter == 'org') {
-            $q = $q->where('organization_id', '=', Organization::HQ()->id);
+            $q = $q->where('organization_id', '=', \Auth::user()->organization_id);
         } elseif ($filter == 'pl') {
             $q = $q->where('organization_id', '<>', Organization::HQ()->id);
         }
