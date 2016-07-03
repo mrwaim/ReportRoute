@@ -396,7 +396,7 @@ class ReportService
         Collection $bonusForMonth,
         $is_hq)
     {
-        $data = ['user' => null, 'totalApprovedOrders' => 0, 'totalIntroductions' => 0, 'totalStockists' => 0, 'totalBonus' => null, 'bonusPayoutForMonth' => null];
+        $data = ['user' => null, 'totalApprovedOrders' => 0, 'totalIntroductions' => 0, 'totalStockists' => 0, 'totalBonus' => null, 'bonusPayoutForMonth' => null, 'bonusIds' => null];
         $data = (object)$data;
         $data->user = $user;
 
@@ -431,6 +431,8 @@ class ReportService
         $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonthUsers);
 
         $data->bonusPayoutForMonth = $bonusPayoutForMonth;
+
+        $data->bonusIds = $bonusForMonthUsers->pluck('id')->values();
 
         return $data;
     }

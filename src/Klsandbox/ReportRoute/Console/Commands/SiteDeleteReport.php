@@ -47,34 +47,37 @@ class SiteDeleteReport extends Command
 
         $this->comment('Deleting report for site ' . Site::key() . " year $year month $month");
 
-        $report = MonthlyReport::forSite()
+        $reports = MonthlyReport::forSite()
             ->where('month', '=', $month)
-            ->where('year', '=', $year)->first();
+            ->where('year', '=', $year)->get();
 
-        if (!$report) {
+        if (!$reports || !$reports->count()) {
             $this->error('no report found');
 
             return;
         }
-        $this->comment("deleting monthly report : $report->id");
 
-        $userReports = MonthlyUserReport::forSite()
-            ->where('monthly_report_id', '=', $report->id)
-            ->get();
+        foreach ($reports as $report) {
+            $this->comment("deleting monthly report : $report->id");
 
-        $PaymentsApprovalsReports = PaymentsApprovals::forSite()->where('monthly_report_id', '=', $report->id)
-            ->get();
+            $userReports = MonthlyUserReport::forSite()
+                ->where('monthly_report_id', '=', $report->id)
+                ->get();
 
-        foreach ($userReports as $userReport) {
-            $this->comment("deleting user monthly report : $userReport->id");
-            $userReport->delete();
+            $PaymentsApprovalsReports = PaymentsApprovals::forSite()->where('monthly_report_id', '=', $report->id)
+                ->get();
+
+            foreach ($userReports as $userReport) {
+                $this->comment("deleting user monthly report : $userReport->id");
+                $userReport->delete();
+            }
+
+            foreach ($PaymentsApprovalsReports as $userReport) {
+                $this->comment("deleting user payments approvals report : $userReport->id");
+                $userReport->delete();
+            }
+
+            $report->delete();
         }
-
-        foreach ($PaymentsApprovalsReports as $userReport) {
-            $this->comment("deleting user payments approvals report : $userReport->id");
-            $userReport->delete();
-        }
-
-        $report->delete();
     }
 }

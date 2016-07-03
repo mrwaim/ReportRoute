@@ -2,6 +2,7 @@
 
 namespace Klsandbox\ReportRoute\Console\Commands;
 
+use App\Models\BonusMonthlyUserReport;
 use App\Models\Organization;
 use App\Models\User;
 use Klsandbox\ReportRoute\Models\MonthlyReport;
@@ -118,6 +119,14 @@ class SiteMakeReport extends Command
                     'online_payer' => (bool)$userData->onlinePayer,
                 ]);
                 $this->comment("  User Report created id:$userReport->id");
+
+                if ($userData->bonusIds)
+                {
+                    foreach ($userData->bonusIds as $id)
+                    {
+                        BonusMonthlyUserReport::create(['bonus_id' => $id, 'monthly_user_report_id' => $userReport->id]);
+                    }
+                }
             }
         }
     }

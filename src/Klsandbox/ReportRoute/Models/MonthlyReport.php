@@ -91,6 +91,11 @@ class MonthlyReport extends Model
         return $this->hasMany('App\Models\PaymentsApprovals');
     }
 
+    public function getCarbon()
+    {
+        return new Carbon(date("$this->year-$this->month-01"));
+    }
+
     /**
      * @param $is_hq
      * @param $organization_id
@@ -104,15 +109,15 @@ class MonthlyReport extends Model
             $report = $report->where('organization_id', '=', $organization_id);
         }
 
-        $report = $report->orderBy('year', 'DESC')
-            ->orderBy('month', 'DESC');
-
         return $report;
     }
 
     public static function getBonusPaymentsList($is_hq, $organization_id)
     {
-        $data = self::forOrganization($is_hq, $organization_id)->get();
+        $data = self::forOrganization($is_hq, $organization_id)
+            ->orderBy('year', 'DESC')
+            ->orderBy('month', 'DESC')
+            ->get();
 
         /**
          * @var MonthlyReport $itm
@@ -154,8 +159,8 @@ class MonthlyReport extends Model
             $data[$key]['not_reviewed_online'] = $online - ($data[$key]['approve_online'] + $data[$key]['reject_online']);
             $data[$key]['not_reviewed_manual'] = $manual - ($data[$key]['approve_manual'] + $data[$key]['reject_manual']);
 
-            assert($data[$key]['not_reviewed_online'] >= 0);
-            assert($data[$key]['not_reviewed_manual'] >= 0);
+//            assert($data[$key]['not_reviewed_online'] >= 0);
+//            assert($data[$key]['not_reviewed_manual'] >= 0);
         }
 
         return $data;
