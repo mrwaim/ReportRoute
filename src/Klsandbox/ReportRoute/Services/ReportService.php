@@ -3,6 +3,7 @@
 namespace Klsandbox\ReportRoute\Services;
 
 use App\Models\Order;
+use App\Models\Organization;
 use App\Models\User;
 use Auth;
 use Carbon\Carbon;
@@ -396,7 +397,7 @@ class ReportService
         Collection $bonusForMonth,
         $is_hq)
     {
-        $data = ['user' => null, 'totalApprovedOrders' => 0, 'totalIntroductions' => 0, 'totalStockists' => 0, 'totalBonus' => null, 'bonusPayoutForMonth' => null, 'bonusIds' => null];
+        $data = ['user' => null, 'totalApprovedOrders' => 0, 'totalIntroductions' => 0, 'totalStockists' => 0, 'totalBonus' => null, 'bonusPayoutForMonth' => null, 'bonusIds' => null, 'orderIds' => null];
         $data = (object)$data;
         $data->user = $user;
 
@@ -434,6 +435,8 @@ class ReportService
 
         $data->bonusIds = $bonusForMonthUsers->pluck('id')->values();
 
+        $data->orderIds = $userApprovedOrders->pluck('id')->values();
+
         return $data;
     }
 
@@ -443,7 +446,7 @@ class ReportService
 
         $date = new Carbon("$year-$month-01");
         $end = new Carbon("$year-$month-01");
-        $end->endOfMonth();
+        $end = $end->endOfMonth();
 
         // Total orders made for the month
         // Total orders approved for the month

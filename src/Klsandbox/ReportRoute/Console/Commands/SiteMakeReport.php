@@ -3,6 +3,7 @@
 namespace Klsandbox\ReportRoute\Console\Commands;
 
 use App\Models\BonusMonthlyUserReport;
+use App\Models\OrderMonthlyUserReport;
 use App\Models\Organization;
 use App\Models\User;
 use Klsandbox\ReportRoute\Models\MonthlyReport;
@@ -125,6 +126,14 @@ class SiteMakeReport extends Command
                     foreach ($userData->bonusIds as $id)
                     {
                         BonusMonthlyUserReport::create(['bonus_id' => $id, 'monthly_user_report_id' => $userReport->id]);
+                    }
+                }
+
+                if ($userData->orderIds)
+                {
+                    foreach ($userData->orderIds as $id)
+                    {
+                        OrderMonthlyUserReport::create(['order_id' => $id, 'monthly_user_report_id' => $userReport->id]);
                     }
                 }
             }

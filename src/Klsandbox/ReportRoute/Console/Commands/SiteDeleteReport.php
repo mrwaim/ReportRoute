@@ -2,6 +2,8 @@
 
 namespace Klsandbox\ReportRoute\Console\Commands;
 
+use App\Models\BonusMonthlyUserReport;
+use App\Models\OrderMonthlyUserReport;
 use Klsandbox\ReportRoute\Models\MonthlyReport;
 use Klsandbox\ReportRoute\Models\MonthlyUserReport;
 use App\Models\PaymentsApprovals;
@@ -68,6 +70,14 @@ class SiteDeleteReport extends Command
                 ->get();
 
             foreach ($userReports as $userReport) {
+                foreach (BonusMonthlyUserReport::where('monthly_user_report_id', '=', $userReport->id)->get() as $item) {
+                    $item->delete();
+                }
+
+                foreach (OrderMonthlyUserReport::where('monthly_user_report_id', '=', $userReport->id)->get() as $item) {
+                    $item->delete();
+                }
+
                 $this->comment("deleting user monthly report : $userReport->id");
                 $userReport->delete();
             }
