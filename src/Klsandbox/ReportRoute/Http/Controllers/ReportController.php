@@ -2,6 +2,7 @@
 
 namespace Klsandbox\ReportRoute\Http\Controllers;
 
+use App\Models\OrderItemsUnit;
 use App\Models\Organization;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
@@ -98,5 +99,31 @@ class ReportController extends Controller
             ->paginate(50);
 
         return view('report-route::list-monthly-report')->with('list', $list);
+    }
+
+    public function salesReport($filter)
+    {
+        $auth = Auth::user();
+
+        $list = OrderItemsUnit::with([
+            'orderItem'
+        ])->get();
+
+        if ($filter == 'org') {
+            $list = $list->filter(function ($orderItemUnit) use ($auth) {
+                return $orderItemUnit->orderItem->organization_id == $auth->organization_id;
+            });
+        } elseif ($filter == 'pl') {
+            $list = $list->filter(function ($orderItemUnit) use ($auth) {
+                return $orderItemUnit->orderItem->organization_id != Organization::HQ()->id;
+            });
+        }
+
+        $data = [
+            'list' => $list,
+            'filter' => $filter
+        ];
+
+        return view('report-route::sales-report', $data);
     }
 }
