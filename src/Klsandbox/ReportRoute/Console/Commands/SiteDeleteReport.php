@@ -6,7 +6,6 @@ use Klsandbox\ReportRoute\Models\MonthlyReport;
 use Klsandbox\ReportRoute\Models\MonthlyUserReport;
 use App\Models\PaymentsApprovals;
 use Illuminate\Console\Command;
-use Klsandbox\SiteModel\Site;
 
 class SiteDeleteReport extends Command
 {
@@ -45,10 +44,7 @@ class SiteDeleteReport extends Command
             return;
         }
 
-        $this->comment('Deleting report for site ' . Site::key() . " year $year month $month");
-
-        $reports = MonthlyReport::forSite()
-            ->where('month', '=', $month)
+        $reports = MonthlyReport::where('month', '=', $month)
             ->where('year', '=', $year)->get();
 
         if (!$reports || !$reports->count()) {
@@ -60,11 +56,10 @@ class SiteDeleteReport extends Command
         foreach ($reports as $report) {
             $this->comment("deleting monthly report : $report->id");
 
-            $userReports = MonthlyUserReport::forSite()
-                ->where('monthly_report_id', '=', $report->id)
+            $userReports = MonthlyUserReport::where('monthly_report_id', '=', $report->id)
                 ->get();
 
-            $PaymentsApprovalsReports = PaymentsApprovals::forSite()->where('monthly_report_id', '=', $report->id)
+            $PaymentsApprovalsReports = PaymentsApprovals::where('monthly_report_id', '=', $report->id)
                 ->get();
 
             foreach ($userReports as $userReport) {

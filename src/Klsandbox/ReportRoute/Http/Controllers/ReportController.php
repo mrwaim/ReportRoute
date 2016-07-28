@@ -9,7 +9,6 @@ use Klsandbox\ReportRoute\Models\MonthlyReport;
 use Artisan;
 use Session;
 use Redirect;
-use Klsandbox\SiteModel\Site;
 use App\Http\Controllers\Controller;
 
 class ReportController extends Controller
@@ -40,8 +39,6 @@ class ReportController extends Controller
 
         $report = $report->with('userReports')
             ->first();
-
-        Site::protect($report, 'Report');
 
         $userReports = $report->userReports;
 
@@ -76,7 +73,7 @@ class ReportController extends Controller
 
     public function getMonthlyReportList($filter)
     {
-        $q = MonthlyReport::forSite();
+        $q = MonthlyReport::all();
 
         $q = $q->where('is_hq', '=', $filter == 'hq');
 

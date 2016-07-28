@@ -40,8 +40,6 @@ use Log;
  */
 class MonthlyUserReport extends Model
 {
-    use \Klsandbox\SiteModel\SiteExtensions;
-
     protected $guarded = [];
 
     //
