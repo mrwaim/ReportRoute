@@ -83,8 +83,7 @@ class ReportService
 
         $startDate->startOfMonth();
 
-        $q = Order::forSite()
-            ->whereIn('order_status_id', [OrderStatus::Approved()->id, OrderStatus::Received()->id, OrderStatus::Shipped()->id]);
+        $q = Order::whereIn('order_status_id', [OrderStatus::Approved()->id, OrderStatus::Received()->id, OrderStatus::Shipped()->id]);
 
         if (Auth::user()->role->name != 'admin') {
             $q = $q->where('user_id', '=', Auth::user()->id);
@@ -104,8 +103,7 @@ class ReportService
 
         $startDate->startOfMonth();
 
-        $q = User::forSite()
-            ->where('new_user', '=', 1)
+        $q = User::where('new_user', '=', 1)
             ->where('account_status', '=', 'approved');
 
         if (Auth::user()->role->name != 'admin') {
@@ -124,8 +122,7 @@ class ReportService
 
     public function getTopIntroducer()
     {
-        $g = User::forSite()
-            ->where('account_status', '=', 'approved')
+        $g = User::where('account_status', '=', 'approved')
             ->where('role_id', '<>', User::admin()->role_id)
             ->groupBy('referral_id')
             ->where('referral_id', '<>', User::admin()->id)
@@ -138,8 +135,7 @@ class ReportService
 
     public function getTotalStockist()
     {
-        $count = User::forSite()
-            ->where('account_status', '=', 'approved')
+        $count = User::where('account_status', '=', 'approved')
             ->where('role_id', '<>', User::admin()->role_id)
             ->count();
 
@@ -148,7 +144,7 @@ class ReportService
 
     public function getTotalOrders()
     {
-        $q = Order::forSite();
+        $q = Order::query();
         $q = Order::whereApproved($q);
         $count = $q->count();
 
@@ -157,7 +153,7 @@ class ReportService
 
     public function getCurrentMonthRevenue()
     {
-        $q = Order::forSite();
+        $q = Order::query();
         $q = Order::whereApproved($q);
         $q = $q->with('proofOfTransfer');
         $q = $q->where('created_at', '>=', ((new Carbon())->startOfMonth()));
@@ -179,7 +175,7 @@ class ReportService
     // TODO: Record price for each
     public function getTotalRevenue()
     {
-        $q = Order::forSite();
+        $q = Order::query();
         $q = Order::whereApproved($q)
             ->with('proofOfTransfer')
             ->has('proofOfTransfer');
@@ -214,8 +210,7 @@ class ReportService
 
         $bonusClass = config('bonus.bonus_model');
 
-        $g = $bonusClass::forSite()
-            ->where('bonus_status_id', '=', BonusStatus::Active()->id)
+        $g = $bonusClass::where('bonus_status_id', '=', BonusStatus::Active()->id)
             ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
             ->get();
 
@@ -245,8 +240,7 @@ class ReportService
 
         $bonusClass = config('bonus.bonus_model');
 
-        $g = $bonusClass::forSite()
-            ->where('bonus_status_id', '=', BonusStatus::Active()->id)
+        $g = $bonusClass::where('bonus_status_id', '=', BonusStatus::Active()->id)
             ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
             ->get();
 
@@ -267,8 +261,7 @@ class ReportService
 
         $bonusClass = config('bonus.bonus_model');
 
-        $g = $bonusClass::forSite()
-            ->where('bonus_status_id', '=', BonusStatus::Active()->id)
+        $g = $bonusClass::where('bonus_status_id', '=', BonusStatus::Active()->id)
             ->where('awarded_to_user_id', '=', $userId)
             // Need to resolve this, its so broken
 //            ->where(DB::raw('MONTH(created_at)'), '=', $thisMonth)
@@ -455,15 +448,13 @@ class ReportService
         // Total revenue - sum(price) for the month
         // Total bonus paid out (Cash, Gold, Unchosen) for the month
 
-        $allOrders = Order::forSite()
-            ->with('user')
+        $allOrders = Order::with('user')
             ->where('created_at', '>=', $date)
             ->where('created_at', '<=', $end)
             ->orderBy('created_at')
             ->get();
 
-        $allUsers = $userClass::forSite()
-            ->where('created_at', '<=', $end)
+        $allUsers = $userClass::where('created_at', '<=', $end)
             ->where('account_status', '=', 'Approved')
             ->get();
 
@@ -511,8 +502,7 @@ class ReportService
         if (config('bonus')) {
             $bonusClass = config('bonus.bonus_model');
 
-            $bonusForMonth = $bonusClass::forSite()
-                ->with(['bonusPayout', 'bonusPayout.bonusCurrency'])
+            $bonusForMonth = $bonusClass::with(['bonusPayout', 'bonusPayout.bonusCurrency'])
                 ->where('created_at', '>=', $date)
                 ->where('created_at', '<=', $end)
                 ->where('bonus_status_id', '=', BonusStatus::Active()->id);

@@ -58,8 +58,6 @@ use Log;
  */
 class MonthlyReport extends Model
 {
-    use \Klsandbox\SiteModel\SiteExtensions;
-
     protected $guarded = [];
 
     //
@@ -135,9 +133,7 @@ class MonthlyReport extends Model
 
             $report = $itm->userReports()->getQuery();
 
-            $online_users_data = BillplzResponse
-                ::forSite()
-                ->select('metadata_user_id')
+            $online_users_data = BillplzResponse::select('metadata_user_id')
                 ->where('created_at', '>=', $start_date)
                 ->where('created_at', '<=', $end_date)
                 ->where('paid', true)

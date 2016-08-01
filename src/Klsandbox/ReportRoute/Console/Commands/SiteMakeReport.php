@@ -12,7 +12,6 @@ use Klsandbox\ReportRoute\Services\ReportService;
 use Auth;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Klsandbox\SiteModel\Site;
 
 class SiteMakeReport extends Command
 {
@@ -52,8 +51,6 @@ class SiteMakeReport extends Command
 
         $boot = new MonthlyReport();
 
-        $this->comment('Generating reports for site ' . Site::key());
-
         Auth::setUser($userClass::admin());
 
         \DB::transaction(function () {
@@ -77,8 +74,7 @@ class SiteMakeReport extends Command
         foreach ($this->getLastThreeMonths() as $date) {
             $this->comment('Generating report for ' . $date);
 
-            $report = MonthlyReport::where('site_id', '=', Site::id())
-                ->where('month', '=', $date->month)
+            $report = MonthlyReport::where('month', '=', $date->month)
                 ->where('year', '=', $date->year)
                 ->where('is_hq', '=', $is_hq)
                 ->where('organization_id', '=', $organization_id)

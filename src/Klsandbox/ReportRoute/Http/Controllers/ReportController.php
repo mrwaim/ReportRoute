@@ -3,13 +3,13 @@
 namespace Klsandbox\ReportRoute\Http\Controllers;
 
 use App\Models\Organization;
+use App\Services\Site;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
 use Klsandbox\ReportRoute\Models\MonthlyReport;
 use Artisan;
 use Session;
 use Redirect;
-use Klsandbox\SiteModel\Site;
 use App\Http\Controllers\Controller;
 
 class ReportController extends Controller
@@ -40,9 +40,7 @@ class ReportController extends Controller
 
         $report = $report->with('userReports')
             ->first();
-
         Site::protect($report, 'Report');
-
         $userReports = $report->userReports;
 
         if ($filter == 'active') {
@@ -76,7 +74,7 @@ class ReportController extends Controller
 
     public function getMonthlyReportList($filter)
     {
-        $q = MonthlyReport::forSite();
+        $q = MonthlyReport::all();
 
         $q = $q->where('is_hq', '=', $filter == 'hq');
 

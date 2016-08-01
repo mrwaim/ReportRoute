@@ -8,7 +8,6 @@ use Klsandbox\ReportRoute\Models\MonthlyUserReport;
 use Klsandbox\ReportRoute\Services\ReportService;
 use Auth;
 use Illuminate\Console\Command;
-use Klsandbox\SiteModel\Site;
 use Symfony\Component\Console\Input\InputOption;
 
 class SiteUpdateReport extends Command
@@ -62,8 +61,7 @@ class SiteUpdateReport extends Command
             return;
         }
 
-        $report = MonthlyReport::forSite()
-            ->where('month', '=', $month)
+        $report = MonthlyReport::where('month', '=', $month)
             ->where('year', '=', $year)->first();
 
         if (!$report) {
@@ -76,8 +74,6 @@ class SiteUpdateReport extends Command
 
         $userClass = config('auth.model');
 
-        $this->comment('Generating reports for site ' . Site::key());
-
         Auth::setUser($userClass::admin());
 
         \DB::transaction(function () use ($report, $year, $month) {
@@ -85,11 +81,10 @@ class SiteUpdateReport extends Command
             $is_hq = true;
             $organization_id = null;
 
-            $userReports = MonthlyUserReport::forSite()
-                ->where('monthly_report_id', '=', $report->id)
+            $userReports = MonthlyUserReport::where('monthly_report_id', '=', $report->id)
                 ->get();
 
-            $PaymentsApprovalsReports = PaymentsApprovals::forSite()->where('monthly_report_id', '=', $report->id)
+            $PaymentsApprovalsReports = PaymentsApprovals::where('monthly_report_id', '=', $report->id)
                 ->get();
 
             foreach ($userReports as $userReport) {
