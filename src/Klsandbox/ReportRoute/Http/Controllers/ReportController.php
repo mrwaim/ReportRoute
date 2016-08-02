@@ -74,9 +74,7 @@ class ReportController extends Controller
 
     public function getMonthlyReportList($filter)
     {
-        $q = MonthlyReport::all();
-
-        $q = $q->where('is_hq', '=', $filter == 'hq');
+        $q = MonthlyReport::where('is_hq', '=', $filter == 'hq');
 
         if ($filter == 'org') {
             $q = $q->where('organization_id', '=', \Auth::user()->organization_id);
