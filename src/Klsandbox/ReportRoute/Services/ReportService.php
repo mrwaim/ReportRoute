@@ -513,9 +513,9 @@ class ReportService
 
             $bonusForMonth = $bonusForMonth->get();
 
-            $bonusForMonth->load('orderItem.productPricing.product');
+            $bonusForMonth->load('orderItem.product');
             $bonusForMonth = $bonusForMonth->filter(function ($bonus) use ($is_hq) {
-                return $bonus->orderItem->productPricing->product->is_hq == $is_hq;
+                return $bonus->orderItem->product->is_hq == $is_hq;
             });
 
             $bonusPayoutForMonth = (object)$this->getTotalBonusPayoutForList($bonusForMonth);
