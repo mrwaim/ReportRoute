@@ -166,5 +166,4 @@ class MonthlyReport extends Model
     {
         return $this->belongsTo(Organization::class);
     }
-
 }

@@ -3,7 +3,6 @@
 namespace Klsandbox\ReportRoute\Services;
 
 use App\Models\Order;
-use App\Models\Organization;
 use App\Models\User;
 use Auth;
 use Carbon\Carbon;

@@ -47,7 +47,7 @@ class SiteDeleteReport extends Command
         }
 
         $this->comment("Deleting report year $year month $month");
-        
+
         $reports = MonthlyReport::where('month', '=', $month)
             ->where('year', '=', $year)->get();
 

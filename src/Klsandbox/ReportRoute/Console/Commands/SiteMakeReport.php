@@ -56,20 +56,18 @@ class SiteMakeReport extends Command
         \DB::transaction(function () {
             $this->generateReport(true, null);
 
-            foreach (Organization::all() as $organization)
-            {
+            foreach (Organization::all() as $organization) {
                 $this->generateReport(false, $organization->id);
             }
         });
     }
-
 
     /**
      * @param $this
      * @param $is_hq
      * @param $organization_id
      */
-    function generateReport($is_hq, $organization_id)
+    public function generateReport($is_hq, $organization_id)
     {
         foreach ($this->getLastThreeMonths() as $date) {
             $this->comment('Generating report for ' . $date);
@@ -117,18 +115,14 @@ class SiteMakeReport extends Command
                 ]);
                 $this->comment("  User Report created id:$userReport->id");
 
-                if ($userData->bonusIds)
-                {
-                    foreach ($userData->bonusIds as $id)
-                    {
+                if ($userData->bonusIds) {
+                    foreach ($userData->bonusIds as $id) {
                         BonusMonthlyUserReport::create(['bonus_id' => $id, 'monthly_user_report_id' => $userReport->id]);
                     }
                 }
 
-                if ($userData->orderIds)
-                {
-                    foreach ($userData->orderIds as $id)
-                    {
+                if ($userData->orderIds) {
+                    foreach ($userData->orderIds as $id) {
                         OrderMonthlyUserReport::create(['order_id' => $id, 'monthly_user_report_id' => $userReport->id]);
                     }
                 }

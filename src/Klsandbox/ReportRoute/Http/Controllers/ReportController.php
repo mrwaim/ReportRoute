@@ -88,7 +88,6 @@ class ReportController extends Controller
             $q = $q->where('orders_count', '>', 0);
         }
 
-
         $list = $q->orderBy('year', 'DESC')
             ->orderBy('month', 'DESC')
             ->paginate(50);
