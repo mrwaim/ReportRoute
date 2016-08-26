@@ -3,6 +3,7 @@
 namespace Klsandbox\ReportRoute\Services;
 
 use App\Models\Order;
+use App\Models\Organization;
 use App\Models\User;
 use Auth;
 use Carbon\Carbon;
@@ -132,13 +133,17 @@ class ReportService
         return $g;
     }
 
-    public function getTotalStockist()
+    public function getTotalStockist(User $user)
     {
         $count = User::where('account_status', '=', 'approved')
-            ->where('role_id', '<>', User::admin()->role_id)
-            ->count();
+            ->where('role_id', Role::Stockist()->id);
 
-        return $count;
+        if ($user->organization_id != Organization::HQ()->id) {
+            $count = $count->where('organization_id', $user->organization_id)
+                            ->where('id', '!=', $user->id);
+        }
+
+        return $count->count();
     }
 
     public function getTotalOrders()
