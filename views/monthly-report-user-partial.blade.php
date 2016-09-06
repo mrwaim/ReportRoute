@@ -14,10 +14,10 @@
                     <th class="text-center">Approved Orders</th>
                     <th class="text-center">Total Stockist</th>
                     @if($config->stockist_can_introduce)
-                    <th class="text-center">Total Introduction</th>
+                        <th class="text-center">Total Introduction</th>
                     @endif
                     @if($has_bonus)
-                    <th class="text-center">Bonus Cash</th>
+                        <th class="text-center">Bonus Cash</th>
                     @endif
                     <th class="text-center">Online Payer</th>
                 </tr>
@@ -25,21 +25,26 @@
                 <tbody>
                 @foreach($userData as $data)
                     <tr name="bonus_row">
-                        <td>@link($data->user)
-                            @if($data->user->isBlocked())
-                                BLOCKED
+                        <td>
+                            @if(!$data->user)
+                                N/A
+                            @else
+                                @link($data->user)
+                                @if($data->user->isBlocked())
+                                    BLOCKED
+                                @endif
                             @endif
                         </td>
-                        <td class="text-center">{{$data->user->getDisplayRole()}}</td>
-                        <td class="text-center text-nowrap">{{$data->user->bank_name}}<br>{{$data->user->bank_account}}
+                        <td class="text-center">{{$data->user ? $data->user->getDisplayRole() : 'N/A'}}</td>
+                        <td class="text-center text-nowrap">{{$data->user ? $data->user->bank_name : 'N/A'}}<br>{{$data->user ? $data->user->bank_account : 'N/A'}}
                         </td>
                         <td class="text-center">{{$data->orders_count}}</td>
                         <td class="text-center">{{$data->total_stockist_count}}</td>
                         @if($config->stockist_can_introduce)
-                        <td class="text-center">{{$data->introductions_count}}</td>
+                            <td class="text-center">{{$data->introductions_count}}</td>
                         @endif
                         @if($has_bonus)
-                        <td class="text-center">{{$data->bonus_payout_cash}}</td>
+                            <td class="text-center">{{$data->bonus_payout_cash}}</td>
                         @endif
                         <td class="text-center">
                             @if($data->online_payer)
