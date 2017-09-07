@@ -14,6 +14,14 @@
         [
             'url'  => 'monthly-report-list/pl',
             'menu'  => 'Monthly Reports (PL)',
-        ],
+            ],
+        [
+            'url' => 'sales-report/org',
+            'menu' => 'Sales Report Org'
+            ],
+        [
+           'url' => 'sales-report/pl',
+            'menu' => 'Sales Report PL'
+        ]
     ]
 ])
