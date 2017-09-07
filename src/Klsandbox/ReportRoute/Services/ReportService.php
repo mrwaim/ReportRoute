@@ -120,17 +120,20 @@ class ReportService
         return $this->getMonthlyCount($users, $startDate);
     }
 
-    public function getTopIntroducer()
+    public function getTopIntroducer($is_hq, $organizationId)
     {
         $g = User::where('account_status', '=', 'approved')
             ->where('role_id', '<>', User::admin()->role_id)
             ->groupBy('referral_id')
             ->where('referral_id', '<>', User::admin()->id)
             ->orderBy(DB::raw('count(*)'), 'DESC')
-            ->get(['referral_id', DB::raw('count(*) as count')])
-            ->first();
+            ->get(['referral_id', DB::raw('count(*) as count')]);
 
-        return $g;
+        if (! $is_hq) {
+            $g = $g->where('organization_id', $organizationId);
+        }
+
+        return $g->first();
     }
 
     public function getTotalStockist(User $user)
